@@ -7,7 +7,7 @@ _users = compile(r"<@[\w]+>")
 
 def list_users(event):
     if "text" not in event:
-        return 0
+        return []
     return _users.findall(event["text"])
 
 
