@@ -5,6 +5,9 @@ from requests import get, post
 _users = compile(r"<@[\w]+>")
 
 
+get_name = lambda field, id: get_channel(id) if field == 'channel' else get_user_name(id)
+
+
 def list_users(event):
     if "text" not in event:
         return 0
@@ -18,12 +21,16 @@ def get_channel(channel):
     }).json()['channel']['name']
 
 
-def get_user_name(user):
-    json = get('https://slack.com/api/users.info', {
-        'token': environ['OAUTH_TOKEN'],
-        'user': user
+def get_permalink(channel, ts):
+    json = get('https://slack.com/api/chat.getPermalink', {
+        'channel': channel,
+        'message_ts': ts,
+        'token': environ['OAUTH_TOKEN']
     }).json()
-    return json['user']['profile']['display_name']
+    if "permalink" in json:
+        return json['permalink']
+    else:
+        return "Link not found."
 
 
 def react(channel, timestamp, reaction):

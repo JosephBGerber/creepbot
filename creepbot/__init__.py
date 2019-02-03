@@ -1,12 +1,12 @@
-from creepbot.slack import list_users
+from creepbot.slack import list_users, get_user_name, get_permalink
 from creepbot.database import *
 from flask import abort, Flask, jsonify, request
 from os import environ
 import pprint
 
 
-#_get_names = lambda field, ids: sorted(get_name(field, id) for id in ids)
-#_join_ids = lambda field, ids: ', '.join(f'*{name}*' for name in _get_names(field, ids))
+get_names = lambda ids: sorted(get_user_name(id) for id in ids)
+join_ids = lambda ids: ', '.join(f'*{name}*' for name in ids)
 
 
 app = Flask(__name__)
@@ -14,7 +14,6 @@ app = Flask(__name__)
 
 @app.route('/', methods=['POST'])
 def main():
-    pprint.pprint(request.json)
     json = request.json
     if request.json.get('token') != environ['SLACK_VERIFICATION_TOKEN']:
         abort(403)
@@ -22,7 +21,9 @@ def main():
     if json['type'] == 'url_verification':
         return json['challenge']
 
-    if "files" in json["event"] and json["event"]["type"] == "message" and len(list_users(json["event"])):
+    if "files" in json["event"] and json["event"]["type"] == "message" and \
+            len(list_users(json["event"]) and json["event"]["channel"] == environ["CHANNEL"]):
+
         create_creepshot(json["event"])
         return ''
 
@@ -41,33 +42,37 @@ def main():
     return ''
 
 
-@app.route(f'/{environ["REACTION"]}', methods = ['POST'])
+@app.route('/command', methods=['POST'])
 def statistics():
     if request.form.get('token') != environ['SLACK_VERIFICATION_TOKEN']:
         abort(403)
     arguments = request.form.get('text', '').split(' ')
     if len(arguments) == 0:
-        return jsonify(response_type = 'ephemeral', text = f'Usage: `/creepbot` `scores` [`month|today|week|year`]')
+        return jsonify(response_type='ephemeral', text='Usage: `/creepbot` `best|targets|shots`')
     field = arguments[0]
-    try:
-        top = arguments[1]
-    except:
-        top = ''
-    if top == 'today':
-        text = 'today'
-    elif top == 'month':
-        text = 'this month'
-    elif top == 'week':
-        text = 'this week'
-    elif top == 'year':
-        text = 'this year'
+    if field == "best":
+        text = 'Cshers with the most points:\n'
+        for index, reactions in enumerate(get_top_creepshoters(), 1):
+            text += f'{index}. {join_ids(reactions["ids"])} - {reactions["_id"]}\n'
+        return jsonify(response_type='in_channel', text=text)
+
+    elif field == "shots":
+        text = "Best creepshots of all time:\n"
+        for index, reaction in enumerate(get_top_creepshots(), 1):
+            ts, channel = reaction["_id"].split("@")
+            link = get_permalink(channel, ts)
+            text += f'{index}: {link} by {reaction["creepshoter"]} - {reaction["plus"]}\n'
+        return jsonify(response_type="in_channel", text=text)
+
+    elif field == "targets":
+        text = "Most creepshotted cshers of all time:\n"
+        for index, reactions in enumerate(get_top_creepshotees(), 1):
+            pprint.pprint(reactions)
+            text += f'{index}. {join_ids(reactions["ids"])} - {reactions["_id"]}\n'
+        return jsonify(response_type='in_channel', text=text)
+
     else:
-        text = 'of all-time'
-    text = 'Users with the most creepshots:\n'
-    field = field[:-1]
-    for index, reactions in enumerate(get_top_reactions(field, top), 1):
-        text += f'{index}. {_join_ids(field, reactions["ids"])} - {reactions["_id"]}\n'
-    return jsonify(response_type = 'in_channel', text = text)
+        return jsonify(response_type='ephemeral', text='Usage: `/creepbot` `users|scores`')
 
 
 def item_id(event):
