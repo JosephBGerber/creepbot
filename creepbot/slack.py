@@ -5,9 +5,6 @@ from requests import get, post
 _users = compile(r"<@[\w]+>")
 
 
-get_name = lambda field, id: get_channel(id) if field == 'channel' else get_user_name(id)
-
-
 def list_users(event):
     if "text" not in event:
         return 0

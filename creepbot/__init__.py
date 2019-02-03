@@ -1,11 +1,10 @@
-from creepbot.slack import list_users, get_user_name, get_permalink
+from creepbot.slack import list_users, get_permalink
 from creepbot.database import *
 from flask import abort, Flask, jsonify, request
 from os import environ
 import pprint
 
 
-get_names = lambda ids: sorted(get_user_name(id) for id in ids)
 join_ids = lambda ids: ', '.join(f'*{name}*' for name in ids)
 
 
