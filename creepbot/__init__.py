@@ -20,8 +20,7 @@ def main():
     if json['type'] == 'url_verification':
         return json['challenge']
 
-    if "files" in json["event"] and json["event"]["type"] == "message" and \
-            (len(list_users(json["event"]) > 0) and json["event"]["channel"] == environ["CHANNEL"]):
+    if "files" in json["event"] and json["event"]["type"] == "message" and (len(list_users(json["event"])) > 0) and json["event"]["channel"] == environ["CHANNEL"]:
 
         create_creepshot(json["event"])
         return ''
