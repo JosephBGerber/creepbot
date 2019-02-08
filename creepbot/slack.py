@@ -2,13 +2,17 @@ from re import compile
 from os import environ
 from requests import get, post
 
-_users = compile(r"<@[\w]+>")
+
+_users = compile(r"(<@)([\w]+)([>|])")
 
 
 def list_users(event):
     if "text" not in event:
         return []
-    return _users.findall(event["text"])
+    lst = []
+    for user in _users.finditer(event["text"]):
+        lst.append(user.group(2))
+    return lst
 
 
 def get_channel(channel):
