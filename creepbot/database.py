@@ -78,6 +78,21 @@ def get_top_creepshotees(team_id, season, time_range):
     return db[team_id]['shots'].aggregate(aggregation)
 
 
+def get_season_wins(team_id, season, time_range):
+    aggregation = [
+    {'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, "season")]}}},
+    {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
+    {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+    {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
+    {'$project': {'_id': '$_id', 'creepshoters': {'$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+    {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
+    {'$group': {'_id': '$wins', 'creepshoters': {'$push': '$_id'}}},
+    {'$sort': {'_id': -1}},
+    {'$limit': 5}]
+
+    return db[team_id]['shots'].aggregate(aggregation)
+
+
 def get_time_range(season, time_range):
     if time_range == "all-time":
         return 0

@@ -1,7 +1,7 @@
 from creepbot.slack import get_permalink, _users
 from creepbot.database import *
-from creepbot.command import fail_command, best_command, worst_command
-from flask import abort, Flask, jsonify, request
+from creepbot.command import fail_command, best_command, worst_command, wins_command
+from flask import abort, Flask, request
 from os import environ
 import pprint
 
@@ -52,7 +52,7 @@ def statistics():
     print(arguments)
 
     user_result = _users.search(arguments[0])
-    if len(arguments) == 0 or arguments[0] not in ["best", "worst"] or user_result:
+    if len(arguments) == 0 or arguments[0] not in ["best", "worst", "wins"] or user_result:
         return fail_command()
 
     if len(arguments) > 1 and arguments[1] in ["week", "season", "all-time"]:
@@ -65,6 +65,9 @@ def statistics():
 
     if arguments[0] == "worst":
         return worst_command(team_id, season, time_range)
+
+    if arguments[0] == "wins":
+        return wins_command(team_id, season, time_range)
 
     return fail_command()
 
