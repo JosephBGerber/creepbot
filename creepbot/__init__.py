@@ -1,7 +1,7 @@
 from creepbot.slack import get_permalink, _users
-from creepbot.database import *
-from creepbot.command import fail_command, best_command, worst_command, wins_command, user_command
-from flask import abort, Flask, request
+from creepbot.database import create_creepshot, increment_plus, increment_trash, decrement_plus, decrement_trash, get_season
+from creepbot.command import *
+from flask import abort, Flask, request, jsonify
 from os import environ
 import pprint
 
@@ -16,6 +16,7 @@ def main():
     if request.json.get('token') != environ['SLACK_VERIFICATION_TOKEN']:
         abort(403)
 
+    season = get_season(json["team_id"])
     if json['type'] == 'url_verification':
         return json['challenge']
 
@@ -48,17 +49,22 @@ def statistics():
     team_id = request.form.get("team_id")
     season = get_season(team_id)
 
+    gm_list = ["UFWE1SCRK"]
+
     arguments = request.form.get('text', "").split(' ')
     print(arguments)
 
     user_result = _users.search(arguments[0])
-    if arguments[0] not in ["best", "worst", "wins"] and not user_result:
+    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start"] and not user_result:
         return fail_command()
 
     if len(arguments) > 1 and arguments[1] in ["week", "season", "all-time"]:
         time_range = arguments[1]
     else:
         time_range = "week"
+
+    if arguments[0] == "help":
+        return help_command()
 
     if arguments[0] == "best":
         return best_command(team_id, season, time_range)
@@ -72,7 +78,21 @@ def statistics():
     if user_result:
         return user_command(team_id, season, time_range, user_result[2])
 
-    print("made it")
+    if arguments[0] == "gm_start":
+        if request.form.get("user_id") in gm_list:
+            if len(arguments) < 2:
+                return jsonify(text="Season name required")
+            else:
+                return gm_start_season_command(team_id, season, arguments[1])
+        else:
+            return jsonify(text="You're not a gm")
+
+    if arguments[0] == "gm_end":
+        if request.form.get("user_id") in gm_list:
+            return gm_end_season_command(team_id, season)
+        else:
+            return jsonify(text="You're not a gm")
+
     return fail_command()
 
 

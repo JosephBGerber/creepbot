@@ -1,7 +1,7 @@
 from re import compile
 from os import environ
 from requests import get, post
-
+import time
 
 _users = compile(r"(<@)([\w]+)([>|])")
 
@@ -13,6 +13,14 @@ def list_users(event):
     for user in _users.finditer(event["text"]):
         lst.append(user.group(2))
     return lst
+
+
+def get_week(season):
+    if season:
+        sunday = time.time() - (time.time() % 604800) - 280000
+        return int((sunday-season["start_ts"])//604800)
+    else:
+        return 0
 
 
 def get_channel(channel):
