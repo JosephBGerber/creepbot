@@ -49,6 +49,7 @@ def decrement_trash(team_id, ts):
 
 def get_top_creepshoters(team_id, season, time_range):
     aggregation = [
+        {'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, time_range)]}}},
         {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
         {'$match': {'$expr': {'$gte': ['$plus', 1]}}},
         {'$group': {'_id': '$creepshoter', 'count': {'$sum': '$plus'}}},
@@ -57,13 +58,12 @@ def get_top_creepshoters(team_id, season, time_range):
         {'$limit': 5}
     ]
 
-    aggregation = [{'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, time_range)]}}}] + aggregation
-
     return db[team_id]['shots'].aggregate(aggregation)
 
 
 def get_top_creepshotees(team_id, season, time_range):
     aggregation = [
+        {'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, time_range)]}}},
         {'$match': {'$expr': {'$lte': ['$trash', 10]}}},
         {'$match': {'$expr': {'$gte': ['$plus', 1]}}},
         {'$unwind': '$creepshotee'},
@@ -72,8 +72,6 @@ def get_top_creepshotees(team_id, season, time_range):
         {'$sort': {'_id': -1}},
         {'$limit': 5}
     ]
-
-    aggregation = [{'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, time_range)]}}}] + aggregation
 
     return db[team_id]['shots'].aggregate(aggregation)
 
@@ -91,6 +89,38 @@ def get_season_wins(team_id, season, time_range):
     {'$limit': 5}]
 
     return db[team_id]['shots'].aggregate(aggregation)
+
+
+def get_user_stats(team_id, season, time_range, user):
+    aggregation = [
+        {'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, "season")]}}},
+        {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
+        {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+        {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
+        {'$project': {'_id': '$_id', 'creepshoters': {'$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+        {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
+        {'$match': {'_id': user}}
+    ]
+
+    try:
+        wins = db[team_id]['shots'].aggregate(aggregation).next().get('wins')
+    except StopIteration:
+        wins = 0
+
+    aggregation = [
+        {'$match': {'$expr': {'$gt': ['$ts', get_time_range(season, time_range)]}}},
+        {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
+        {'$match': {'$expr': {'$gte': ['$plus', 1]}}},
+        {'$group': {'_id': '$creepshoter', 'count': {'$sum': '$plus'}}},
+        {'$match': {'_id': user}}
+    ]
+
+    try:
+        points = db[team_id]['shots'].aggregate(aggregation).next().get('count')
+    except StopIteration:
+        points = 0
+
+    return wins, points
 
 
 def get_time_range(season, time_range):

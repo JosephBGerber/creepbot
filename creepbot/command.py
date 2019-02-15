@@ -1,5 +1,5 @@
 from flask import jsonify
-from creepbot.database import get_top_creepshoters, get_top_creepshotees, get_season_wins
+from creepbot.database import get_top_creepshoters, get_top_creepshotees, get_season_wins, get_user_stats
 
 
 join_ids = lambda ids: ', '.join(f'*<@{name}>*' for name in ids)
@@ -37,3 +37,14 @@ def wins_command(team_id, season, time_range):
         for index, reactions in enumerate(get_season_wins(team_id, season, time_range), 1):
             text += f'{index}. {join_ids(reactions["creepshoters"])} - {reactions["_id"]}\n'
         return jsonify(response_type='ephemeral', text=text)
+
+
+def user_command(team_id, season, time_range, user):
+    wins, points = get_user_stats(team_id, season, time_range, user)
+
+    if not season:
+        text = f"<@{user}> has earned {points} points."
+    else:
+        text = f"<@{user}> has earned {points} points and won {wins} time(s)."
+
+    return jsonify(response_type='ephemeral', text=text)
