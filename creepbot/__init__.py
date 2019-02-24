@@ -1,4 +1,4 @@
-from creepbot.slack import get_permalink, _users
+from creepbot.slack import get_oauth, _users
 from creepbot.database import DatabaseWrapper, get_season
 from creepbot.command import CommandHandler
 from flask import abort, Flask, request, jsonify
@@ -9,6 +9,18 @@ import pprint
 app = Flask(__name__)
 
 
+@app.route('/oauth', methods=['GET'])
+def auth():
+    code = request.args.get("code")
+    oauth = get_oauth(code)
+    team_id = oauth["team_id"]
+    db = DatabaseWrapper(team_id, False)
+    token = oauth['bot']['bot_access_token']
+    db.save_oauth(token)
+
+    return "Creepbot has been installed"
+
+
 @app.route('/', methods=['POST'])
 def main():
     json = request.json
@@ -16,14 +28,14 @@ def main():
     if request.json.get('token') != environ['SLACK_VERIFICATION_TOKEN']:
         abort(403)
 
+    if json['type'] == 'url_verification':
+        return json['challenge']
+
     team_id = json["team_id"]
     season = get_season(json["team_id"])
     db = DatabaseWrapper(team_id, season)
 
-    if json['type'] == 'url_verification':
-        return json['challenge']
-
-    if "files" in json["event"] and json["event"]["type"] == "message" and json["event"]["channel"] == environ["CHANNEL"]:
+    if "files" in json["event"] and json["event"]["type"] == "message" and json["event"]["channel"] in environ["CHANNEL_LIST"].split():
         db.create_creepshot(json["event"])
         return ''
 
@@ -56,7 +68,7 @@ def statistics():
     print(arguments)
 
     user_result = _users.search(arguments[0])
-    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start"] and not user_result:
+    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week"] and not user_result:
         return c.fail_command()
 
     if len(arguments) > 1 and arguments[1] in ["week", "season", "all-time"]:
@@ -94,6 +106,11 @@ def statistics():
         else:
             return jsonify(text="You're not a gm")
 
+    if arguments[0] == "gm_week":
+        if request.form.get("user_id") in gm_list:
+            return c.gm_week_command()
+        else:
+            return jsonify(text="You're not a gm")
     return c.fail_command()
 
 

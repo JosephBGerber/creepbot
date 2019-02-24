@@ -18,13 +18,6 @@ class DatabaseWrapper:
         self.team_id = team_id
         self.season = season
 
-    def start_season(self, name):
-        return db[self.team_id]['seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"), "ended": False,
-                                                       "team_id": self.team_id})
-
-    def end_season(self):
-        return db[self.team_id]['seasons'].update_one({'ended': False}, {'$set': {"ended": True, "end_ts": time.time()}})
-
     def create_creepshot(self, event):
         ts = event["ts"]
         channel = event["channel"]
@@ -32,12 +25,19 @@ class DatabaseWrapper:
         lst = list_users(event)
         week = get_week(self.season)
 
-        if len(lst) > 0:
-            db[self.team_id].shots.insert_one({"ts": Decimal128(ts), "channel": channel, "creepshoter": user, "week": week,
-                                               "creepshotee": list_users(event), "plus": -1, "trash": -1})
+        if self.season:
+            season = self.season["name"]
+        else:
+            season = "none"
 
-            react(channel, ts, environ["PLUS_REACTION"])
-            react(channel, ts, environ["TRASH_REACTION"])
+        if len(lst) > 0:
+            db[self.team_id].shots.insert_one({"ts": Decimal128(ts), "channel": channel, "creepshoter": user,
+                                               "creepshotee": lst, "week": week, "season": season,
+                                               "plus": -1, "trash": -1})
+
+            token = self.get_oauth()
+            react(channel, ts, token, environ["PLUS_REACTION"])
+            react(channel, ts, token, environ["TRASH_REACTION"])
         else:
             pass
 
@@ -52,6 +52,20 @@ class DatabaseWrapper:
 
     def decrement_trash(self, ts):
         db[self.team_id]['shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
+
+    def start_season(self, name):
+        return db[self.team_id]['seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),
+                                                       "ended": False})
+
+    def end_season(self):
+        return db[self.team_id]['seasons'].update_one({'ended': False},
+                                                      {'$set': {"ended": True, "end_ts": time.time()}})
+
+    def save_oauth(self, token):
+        db[self.team_id]['auth'].insert_one({'token': token})
+
+    def get_oauth(self):
+        return db[self.team_id]['auth'].find_one()["token"]
 
     def get_top_creepshoters(self, time_range):
         aggregation = [
@@ -82,6 +96,7 @@ class DatabaseWrapper:
         aggregation = [
             {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
+            {'$match': {'$expr': {'$gt': ['$week', -1]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
             {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
@@ -131,9 +146,30 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
+            {'$match': {'$expr': {'$gt': ['$week', -1]}}},
             {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
             {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
             {'$project': {'_id': '$_id', 'creepshoters': {'$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
+            {'$sort': {'wins': -1}},
+            {'$limit': 1}]
+
+        try:
+            champ = db[self.team_id]['shots'].aggregate(aggregation).next().get("_id")
+        except StopIteration:
+            champ = "Nobody"
+
+        return champ
+
+    def get_last_weeks_winner(self):
+        aggregation = [
+            {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
+            {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("week") - 604800]}}},
+            {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
+            {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
+            {'$project': {'_id': '$_id', 'creepshoters': {
+                '$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
             {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
             {'$sort': {'wins': -1}},
             {'$limit': 1}]
