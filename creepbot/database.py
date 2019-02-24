@@ -193,4 +193,4 @@ class DatabaseWrapper:
 
         if time_range == "week":
             """Calculates the epoch time of last Sunday@6:00"""
-            return time.time() - (time.time() % 604800) - 280800
+            return time.time() - (time.time() % 604800) - 262800
