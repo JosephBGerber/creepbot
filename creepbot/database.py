@@ -5,11 +5,11 @@ from os import environ
 import time
 
 
-db = MongoClient(environ["MONGODB_URI"])
+db = MongoClient(environ["MONGODB_URI"])['creepbot']
 
 
 def get_season(team_id):
-    return db[team_id]['seasons'].find_one({'ended': False})
+    return db[team_id + 'seasons'].find_one({'ended': False})
 
 
 class DatabaseWrapper:
@@ -31,7 +31,7 @@ class DatabaseWrapper:
             season = "none"
 
         if len(lst) > 0:
-            db[self.team_id].shots.insert_one({"ts": Decimal128(ts), "channel": channel, "creepshoter": user,
+            db[self.team_id + 'shots'].insert_one({"ts": Decimal128(ts), "channel": channel, "creepshoter": user,
                                                "creepshotee": lst, "week": week, "season": season,
                                                "plus": -1, "trash": -1})
 
@@ -42,30 +42,30 @@ class DatabaseWrapper:
             pass
 
     def increment_plus(self, ts):
-        db[self.team_id]['shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"plus": 1}})
+        db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"plus": 1}})
 
     def decrement_plus(self, ts):
-        db[self.team_id]['shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"plus": -1}})
+        db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"plus": -1}})
 
     def increment_trash(self, ts):
-        db[self.team_id]['shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": 1}})
+        db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": 1}})
 
     def decrement_trash(self, ts):
-        db[self.team_id]['shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
+        db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
 
     def start_season(self, name):
-        return db[self.team_id]['seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),
+        return db[self.team_id + 'seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),
                                                        "ended": False})
 
     def end_season(self):
-        return db[self.team_id]['seasons'].update_one({'ended': False},
+        return db[self.team_id + 'seasons'].update_one({'ended': False},
                                                       {'$set': {"ended": True, "end_ts": time.time()}})
 
     def save_oauth(self, token):
-        db[self.team_id]['auth'].insert_one({'token': token})
+        db[self.team_id + 'auth'].insert_one({'token': token})
 
     def get_oauth(self):
-        return db[self.team_id]['auth'].find_one()["token"]
+        return db[self.team_id + 'auth'].find_one()["token"]
 
     def get_top_creepshoters(self, time_range):
         aggregation = [
@@ -77,7 +77,7 @@ class DatabaseWrapper:
             {'$limit': 5}
         ]
 
-        return db[self.team_id]['shots'].aggregate(aggregation)
+        return db[self.team_id + 'shots'].aggregate(aggregation)
 
     def get_top_creepshotees(self, time_range):
         aggregation = [
@@ -90,7 +90,7 @@ class DatabaseWrapper:
             {'$limit': 5}
         ]
 
-        return db[self.team_id]['shots'].aggregate(aggregation)
+        return db[self.team_id + 'shots'].aggregate(aggregation)
 
     def get_season_wins(self):
         aggregation = [
@@ -107,7 +107,7 @@ class DatabaseWrapper:
             {'$limit': 5}
         ]
 
-        return db[self.team_id]['shots'].aggregate(aggregation)
+        return db[self.team_id + 'shots'].aggregate(aggregation)
 
     def get_user_stats(self, time_range, user):
         aggregation = [
@@ -122,7 +122,7 @@ class DatabaseWrapper:
         ]
 
         try:
-            wins = db[self.team_id]['shots'].aggregate(aggregation).next().get('wins')
+            wins = db[self.team_id + 'shots'].aggregate(aggregation).next().get('wins')
         except StopIteration:
             wins = 0
 
@@ -135,7 +135,7 @@ class DatabaseWrapper:
         ]
 
         try:
-            points = db[self.team_id]['shots'].aggregate(aggregation).next().get('count')
+            points = db[self.team_id + 'shots'].aggregate(aggregation).next().get('count')
         except StopIteration:
             points = 0
 
@@ -155,7 +155,7 @@ class DatabaseWrapper:
             {'$limit': 1}]
 
         try:
-            champ = db[self.team_id]['shots'].aggregate(aggregation).next().get("_id")
+            champ = db[self.team_id + 'shots'].aggregate(aggregation).next().get("_id")
         except StopIteration:
             champ = "Nobody"
 
@@ -175,7 +175,7 @@ class DatabaseWrapper:
             {'$limit': 1}]
 
         try:
-            champ = db[self.team_id]['shots'].aggregate(aggregation).next().get("_id")
+            champ = db[self.team_id + 'shots'].aggregate(aggregation).next().get("_id")
         except StopIteration:
             champ = "Nobody"
 
