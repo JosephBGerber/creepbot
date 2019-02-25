@@ -26,7 +26,7 @@ class CommandHandler:
                f"Get the most wins by the end of the semester to become the season champion!!\n\n" + \
                f"Try using /creepbot to get statistics about the game."
 
-        return jsonify(response_type='in_channel', text=text)
+        return jsonify(response_type='ephemeral', text=text)
 
     def fail_command(self):
         return jsonify(response_type='ephemeral',
