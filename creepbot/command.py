@@ -20,7 +20,7 @@ class CommandHandler:
 
         text = f"Reply to a creepshot with :{plus}: if you think it's advanced and it deserves a point!\n\n" + \
                f"Reply to a creepshot with :{trash}: if you think it's trash.\n\n" + \
-               f"Every :{plus}: gives a point to the creepshoter, but if a creepshot gets enough :{trash}: all" + \
+               f"Every :{plus}: gives a point to the creepshoter, but if a creepshot gets enough :{trash}: all " + \
                f"its points are lost.\n\n" + \
                f"At the end of the week the users with the most points gets a win!\n\n" + \
                f"Get the most wins by the end of the semester to become the season champion!!\n\n" + \
