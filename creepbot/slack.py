@@ -17,8 +17,7 @@ def list_users(event):
 
 def get_week(season):
     if season:
-        sunday = time.time() - (time.time() % 604800) - 262800
-        return int((sunday-season["start_ts"])//604800)
+        return int((time.time()-season["start_ts"])//604800)
     else:
         return -1
 
