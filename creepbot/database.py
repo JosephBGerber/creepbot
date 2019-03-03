@@ -38,20 +38,25 @@ class DatabaseWrapper:
             token = self.get_oauth()
             react(channel, ts, token, environ["PLUS_REACTION"])
             react(channel, ts, token, environ["TRASH_REACTION"])
+            print(f"Shot {ts} created.")
         else:
             pass
 
     def increment_plus(self, ts):
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"plus": 1}})
+        print(f"Shot {ts} plus incremented.")
 
     def decrement_plus(self, ts):
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"plus": -1}})
+        print(f"Shot {ts} plus decremented.")
 
     def increment_trash(self, ts):
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": 1}})
+        print(f"Shot {ts} trash incremented.")
 
     def decrement_trash(self, ts):
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
+        print(f"Shot {ts} trash incremented.")
 
     def start_season(self, name):
         return db[self.team_id + 'seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),

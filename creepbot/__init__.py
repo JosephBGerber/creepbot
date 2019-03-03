@@ -65,7 +65,6 @@ def statistics():
     gm_list = environ["GM_LIST"].split()
 
     arguments = request.form.get('text', "").split(' ')
-    print(arguments)
 
     user_result = _users.search(arguments[0])
     if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week"] and not user_result:
