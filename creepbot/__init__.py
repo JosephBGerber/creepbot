@@ -24,7 +24,6 @@ def auth():
 @app.route('/', methods=['POST'])
 def main():
     json = request.json
-    pprint.pprint(json)
     if request.json.get('token') != environ['SLACK_VERIFICATION_TOKEN']:
         abort(403)
 
