@@ -197,11 +197,13 @@ class DatabaseWrapper:
                 return self.season["start_ts"]
 
         if time_range == "week":
-            """Calculates the epoch time of last Sunday@6:00"""
-            localtime = time.localtime()
-            wday = localtime.tm_wday
-            minutes = localtime.tm_min + localtime.tm_hour*60
-            if wday == 6 and minutes >= 1110:
-                return time.time() - (minutes-1110)*60
+            """Calculates the epoch time of last Sunday@6:00 GMT-5:00"""
+            gmtime = time.gmtime()
+            wday = gmtime.tm_wday
+            seconds = gmtime.tm_sec
+            minutes = gmtime.tm_min + gmtime.tm_hour*60
+            if wday == 6 and minutes >= 1410:
+                return time.time() - (minutes-1410)*60 - seconds
             else:
-                return time.time() - (wday + 1)*86400 - (minutes-1110)*60
+                return time.time() - (wday + 1)*86400 - (minutes-1410)*60 - seconds
+
