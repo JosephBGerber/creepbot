@@ -5,7 +5,7 @@ from os import environ
 import time
 
 
-db = MongoClient(environ["MONGODB_URI"])['snapshot']
+db = MongoClient(environ["MONGODB_URI"])['creepbot']
 
 
 class DatabaseWrapper:
