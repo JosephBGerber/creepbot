@@ -89,7 +89,7 @@ def statistics():
         return wins_command(db.season, season_wins)
 
     if user_result:
-        wins, points = db.get_user_stats(time_range, user_result[2])
+        wins, points = db.get_user_stats("season", user_result[2])
         return user_command(db.season, user_result[2], wins, points)
 
     if arguments[0] == "gm_start":

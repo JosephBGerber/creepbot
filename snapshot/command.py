@@ -84,7 +84,7 @@ def gm_start_season_command(name):
 def gm_end_season_command(champion):
 
     text = f"Congratulations <@{champion}> you’re the snapshot champion.\n\n" + \
-           "Go find a Joseph Gerber to receive your paper crown!\n\n" + \
+           "Go find Joseph Gerber to receive your paper crown!\n\n" + \
            "That’s all for this semester so there will be no more wins until next season, " + \
            "but your all-time score is still being updated so keep posting those shots!"
 
