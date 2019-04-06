@@ -102,7 +102,7 @@ def statistics():
 
         success = db.start_season(arguments[1])
         if success:
-            gm_start_season_command(arguments[1])
+            return gm_start_season_command(arguments[1])
 
     if arguments[0] == "gm_end":
         if request.form.get("user_id") not in gm_list:
