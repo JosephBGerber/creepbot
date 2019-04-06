@@ -10,11 +10,11 @@ def help_command():
     plus = environ["PLUS_REACTION"]
     trash = environ["TRASH_REACTION"]
 
-    text = f"Reply to a creepshot with :{plus}: if you think it's advanced and it deserves a point!\n\n" + \
-           f"Reply to a creepshot with :{trash}: if you think it's trash.\n\n" + \
-           f"Every :{plus}: gives a point to the creepshoter, but if a creepshot gets enough :{trash}: all " + \
+    text = f"Reply to a shot with :{plus}: if you think it's advanced and it deserves a point!\n\n" + \
+           f"Reply to a shot with :{trash}: if you think it's trash.\n\n" + \
+           f"Every :{plus}: gives a point to the user, but if a shot gets enough :{trash}: all " + \
            f"its points are lost.\n\n" + \
-           f"At the end of the week the users with the most points gets a win!\n\n" + \
+           f"At the end of the week the user with the most points gets a win!\n\n" + \
            f"Get the most wins by the end of the semester to become the season champion!!\n\n" + \
            f"Try using /creepbot to get statistics about the game."
 
@@ -50,7 +50,7 @@ def wins_command(season, season_wins):
     else:
         text = "Users with the most wins of this season:\n"
         for index, reactions in enumerate(season_wins, 1):
-            text += f'{index}. {join_ids(reactions["creepshoters"])} - {reactions["_id"]}\n'
+            text += f'{index}. {join_ids(reactions["users"])} - {reactions["_id"]}\n'
 
         return jsonify(response_type='ephemeral', text=text)
 
@@ -69,10 +69,10 @@ def gm_start_season_command(name):
         plus = environ["PLUS_REACTION"]
         trash = environ["TRASH_REACTION"]
 
-        text = f"Welcome to creepshot season {name}!!\n\n" + \
-               f"Reply to a creepshot with :{plus}: if you think it's advanced and it deserves a point!\n\n" + \
-               f"Reply to a creepshot with :{trash}: if you think it's trash.\n\n" + \
-               f"Every :{plus}: gives a point to the creepshoter, but if a creepshot gets enough :{trash}:" + \
+        text = f"Welcome to snapshot season {name}!!\n\n" + \
+               f"Reply to a shot with :{plus}: if you think it's advanced and it deserves a point!\n\n" + \
+               f"Reply to a shot with :{trash}: if you think it's trash.\n\n" + \
+               f"Every :{plus}: gives a point to the user, but if a shot gets enough :{trash}:" + \
                f" all its points are ignored.\n\n" + \
                f"At the end of the week the users with the most points gets a win!\n\n" + \
                f"Get the most wins by the end of the semester to become the season champion!!\n\n" + \
@@ -83,10 +83,10 @@ def gm_start_season_command(name):
 
 def gm_end_season_command(champion):
 
-    text = f"Congratulations <@{champion}> you’re the creepshot champion.\n\n" + \
-           "Go find a creepbot gm to receive your paper crown!\n\n" + \
+    text = f"Congratulations <@{champion}> you’re the snapshot champion.\n\n" + \
+           "Go find a Joseph Gerber to receive your paper crown!\n\n" + \
            "That’s all for this semester so there will be no more wins until next season, " + \
-           "but your all-time score is still being updated so keep posting those creepshots!"
+           "but your all-time score is still being updated so keep posting those shots!"
 
     return jsonify(response_type='in_channel', text=text)
 

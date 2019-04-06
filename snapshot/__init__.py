@@ -1,6 +1,6 @@
-from creepbot.slack import get_oauth, _users
-from creepbot.database import DatabaseWrapper, get_season
-from creepbot.command import *
+from snapshot.slack import get_oauth, _users
+from snapshot.database import DatabaseWrapper
+from snapshot.command import *
 from flask import abort, Flask, request, jsonify
 from os import environ
 import pprint

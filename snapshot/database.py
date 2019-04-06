@@ -1,11 +1,11 @@
 from pymongo import MongoClient
 from bson import Decimal128
-from creepbot.slack import list_users, react, get_week
+from snapshot.slack import list_users, react, get_week
 from os import environ
 import time
 
 
-db = MongoClient(environ["MONGODB_URI"])['creepbot']
+db = MongoClient(environ["MONGODB_URI"])['snapshot']
 
 
 class DatabaseWrapper:
@@ -28,8 +28,8 @@ class DatabaseWrapper:
 
         if len(lst) > 0:
             db[self.team_id + 'shots'].insert_one({"ts": Decimal128(ts), "channel": channel, "user": user,
-                                               "target": lst, "week": week, "season": season,
-                                               "plus": -1, "trash": -1})
+                                                   "targets": lst, "week": week, "season": season,
+                                                   "plus": -1, "trash": -1})
 
             token = self.get_oauth()
             react(channel, ts, token, environ["PLUS_REACTION"])
@@ -52,7 +52,7 @@ class DatabaseWrapper:
 
     def decrement_trash(self, ts):
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
-        print(f"Shot {ts} trash incremented.")
+        print(f"Shot {ts} trash decremented.")
 
     def start_season(self, name):
         return db[self.team_id + 'seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),
@@ -60,7 +60,7 @@ class DatabaseWrapper:
 
     def end_season(self):
         return db[self.team_id + 'seasons'].update_one({'ended': False},
-                                                      {'$set': {"ended": True, "end_ts": time.time()}})
+                                                       {'$set': {"ended": True, "end_ts": time.time()}})
 
     def save_oauth(self, token):
         db[self.team_id + 'auth'].insert_one({'token': token})
@@ -84,8 +84,8 @@ class DatabaseWrapper:
         aggregation = [
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
             {'$match': {'$expr': {'$lte': ['$trash', 10]}}},
-            {'$unwind': '$target'},
-            {'$group': {'_id': '$target', 'count': {'$sum': 1}}},
+            {'$unwind': '$targets'},
+            {'$group': {'_id': '$targets', 'count': {'$sum': 1}}},
             {'$group': {'_id': '$count', 'ids': {'$push': '$_id'}}},
             {'$sort': {'_id': -1}},
             {'$limit': 5}
