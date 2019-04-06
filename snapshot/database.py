@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from bson import Decimal128
-from creepbot.slack import list_users, react, get_week
+from snapshot.slack import list_users, react, get_week
 from os import environ
 import time
 
@@ -8,17 +8,13 @@ import time
 db = MongoClient(environ["MONGODB_URI"])['creepbot']
 
 
-def get_season(team_id):
-    return db[team_id + 'seasons'].find_one({'ended': False})
-
-
 class DatabaseWrapper:
 
-    def __init__(self, team_id, season):
+    def __init__(self, team_id):
         self.team_id = team_id
-        self.season = season
+        self.season = db[team_id + 'seasons'].find_one({'ended': False})
 
-    def create_creepshot(self, event):
+    def create_shot(self, event):
         ts = event["ts"]
         channel = event["channel"]
         user = event["user"]
@@ -31,9 +27,9 @@ class DatabaseWrapper:
             season = "none"
 
         if len(lst) > 0:
-            db[self.team_id + 'shots'].insert_one({"ts": Decimal128(ts), "channel": channel, "creepshoter": user,
-                                               "creepshotee": lst, "week": week, "season": season,
-                                               "plus": -1, "trash": -1})
+            db[self.team_id + 'shots'].insert_one({"ts": Decimal128(ts), "channel": channel, "user": user,
+                                                   "targets": lst, "week": week, "season": season,
+                                                   "plus": -1, "trash": -1})
 
             token = self.get_oauth()
             react(channel, ts, token, environ["PLUS_REACTION"])
@@ -56,7 +52,7 @@ class DatabaseWrapper:
 
     def decrement_trash(self, ts):
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
-        print(f"Shot {ts} trash incremented.")
+        print(f"Shot {ts} trash decremented.")
 
     def start_season(self, name):
         return db[self.team_id + 'seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),
@@ -64,7 +60,7 @@ class DatabaseWrapper:
 
     def end_season(self):
         return db[self.team_id + 'seasons'].update_one({'ended': False},
-                                                      {'$set': {"ended": True, "end_ts": time.time()}})
+                                                       {'$set': {"ended": True, "end_ts": time.time()}})
 
     def save_oauth(self, token):
         db[self.team_id + 'auth'].insert_one({'token': token})
@@ -72,11 +68,11 @@ class DatabaseWrapper:
     def get_oauth(self):
         return db[self.team_id + 'auth'].find_one()["token"]
 
-    def get_top_creepshoters(self, time_range):
+    def get_top_users(self, time_range):
         aggregation = [
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$group': {'_id': '$creepshoter', 'count': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$user', 'count': {'$sum': '$plus'}}},
             {'$group': {'_id': '$count', 'ids': {'$push': '$_id'}}},
             {'$sort': {'_id': -1}},
             {'$limit': 5}
@@ -84,12 +80,12 @@ class DatabaseWrapper:
 
         return db[self.team_id + 'shots'].aggregate(aggregation)
 
-    def get_top_creepshotees(self, time_range):
+    def get_top_targets(self, time_range):
         aggregation = [
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
             {'$match': {'$expr': {'$lte': ['$trash', 10]}}},
-            {'$unwind': '$creepshotee'},
-            {'$group': {'_id': '$creepshotee', 'count': {'$sum': 1}}},
+            {'$unwind': '$targets'},
+            {'$group': {'_id': '$targets', 'count': {'$sum': 1}}},
             {'$group': {'_id': '$count', 'ids': {'$push': '$_id'}}},
             {'$sort': {'_id': -1}},
             {'$limit': 5}
@@ -103,11 +99,11 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
             {'$match': {'$expr': {'$gt': ['$week', -1]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'creepshoters': {'$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
-            {'$group': {'_id': '$wins', 'creepshoters': {'$push': '$_id'}}},
+            {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
+            {'$project': {'_id': '$_id', 'users': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
+            {'$group': {'_id': '$wins', 'users': {'$push': '$_id'}}},
             {'$sort': {'_id': -1}},
             {'$limit': 5}
         ]
@@ -119,10 +115,10 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'creepshoters': {'$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
+            {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
+            {'$project': {'_id': '$_id', 'users': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
             {'$match': {'_id': user}}
         ]
 
@@ -135,7 +131,7 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$match': {'$expr': {'$gte': ['$plus', 1]}}},
-            {'$group': {'_id': '$creepshoter', 'count': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$user', 'count': {'$sum': '$plus'}}},
             {'$match': {'_id': user}}
         ]
 
@@ -152,10 +148,10 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$match': {'$expr': {'$gt': ['$week', -1]}}},
-            {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'creepshoters': {'$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
+            {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
+            {'$project': {'_id': '$_id', 'users': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
             {'$sort': {'wins': -1}},
             {'$limit': 1}]
 
@@ -171,11 +167,11 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("week") - 604800]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$group': {'_id': {'creepshoter': '$creepshoter', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$_id.week', 'creepshoters': {'$push': '$_id.creepshoter'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'creepshoters': {
-                '$arrayElemAt': ['$creepshoters', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$creepshoters', 'wins': {'$sum': 1}}},
+            {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
+            {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
+            {'$project': {'_id': '$_id', 'users': {
+                '$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
             {'$sort': {'wins': -1}},
             {'$limit': 1}]
 
