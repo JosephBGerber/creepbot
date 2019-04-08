@@ -32,7 +32,7 @@ def main():
     team_id = json["team_id"]
     db = DatabaseWrapper(team_id)
 
-    if "files" in json["event"] and json["event"]["type"] == "message" and json["event"]["channel"] in environ["CHANNEL_LIST"].split():
+    if "files" in json["event"] and json["event"]["type"] == "message" and db.correct_channel(json["event"]["channel"]):
         db.create_shot(json["event"])
         return ''
 

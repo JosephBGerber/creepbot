@@ -58,6 +58,10 @@ class DatabaseWrapper:
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
         print(f"Shot {ts} trash decremented.")
 
+    def correct_channel(self, channel):
+        set_channel = db['workspaces'].find_one({"team_id": self.team_id})["channel"]
+        return set_channel == channel
+
     def start_season(self, name):
         return db[self.team_id + 'seasons'].insert_one({"name": name, "start_ts": self.get_time_range("week"),
                                                        "ended": False})
