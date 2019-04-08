@@ -58,6 +58,9 @@ class DatabaseWrapper:
         db[self.team_id + 'shots'].update_one({"ts": Decimal128(ts)}, {"$inc": {"trash": -1}})
         print(f"Shot {ts} trash decremented.")
 
+    def set_channel(self, channel):
+        db['workspaces'].replace_one({"team_id": self.team_id}, {"channel": channel})
+
     def correct_channel(self, channel):
         set_channel = db['workspaces'].find_one({"team_id": self.team_id})["channel"]
         return set_channel == channel

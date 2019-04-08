@@ -91,6 +91,10 @@ def statistics():
         wins, points = db.get_user_stats("season", user_result[2])
         return user_command(db.season, user_result[2], wins, points)
 
+    if arguments[0] == "gm_set_channel":
+        db.set_channel(request.form.get("channel_id"))
+        return jsonify(response_type='ephemeral', text="Snapshot channel set")
+
     if arguments[0] == "gm_start":
         if request.form.get("user_id") not in gm_list:
             return jsonify(response_type='ephemeral', text="You're not a gm")
