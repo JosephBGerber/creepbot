@@ -72,7 +72,7 @@ class DatabaseWrapper:
 
     def save_oauth(self, token):
         db['workspaces'].find_one_and_update({"team_id": self.team_id},
-                                             {"channel": "null", "oauth": token}, upsert=True)
+                                             {"$channel": "null", "$oauth": token}, upsert=True)
 
     def get_oauth(self):
         return db['workspaces'].find_one({"team_id": self.team_id})["oauth"]
