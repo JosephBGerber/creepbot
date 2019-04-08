@@ -8,7 +8,6 @@ def gm_week():
     workspaces = get_workspaces()
     for workspace in workspaces:
         db = DatabaseWrapper(workspace["team_id"])
-        print(f"Posting winner for {workspace['team_id']}")
 
         champion = db.get_last_weeks_winner()
         text = gm_week_command(champion)
