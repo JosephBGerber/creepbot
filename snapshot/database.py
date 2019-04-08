@@ -71,8 +71,7 @@ class DatabaseWrapper:
                                                        {'$set': {"ended": True, "end_ts": time.time()}})
 
     def save_oauth(self, token):
-        db['workspaces'].find_one_and_update({"team_id": self.team_id},
-                                             {"$channel": "null", "$oauth": token}, upsert=True)
+        db['workspaces'].insert({"team_id": self.team_id, "channel": "null", "oauth": token})
 
     def get_oauth(self):
         return db['workspaces'].find_one({"team_id": self.team_id})["oauth"]
