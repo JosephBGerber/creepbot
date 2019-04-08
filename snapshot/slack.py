@@ -22,6 +22,14 @@ def get_week(season):
         return -1
 
 
+def post_message(text, channel, oauth):
+    post('https://slack.com/api/chat.postMessage', {
+        'token': oauth,
+        'channel': channel,
+        'text': text
+    })
+
+
 def get_oauth(code):
     return get('https://slack.com/api/oauth.access', {
         'client_id': environ["CLIENT_ID"],

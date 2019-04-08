@@ -8,6 +8,10 @@ import time
 db = MongoClient(environ["MONGODB_URI"])['creepbot']
 
 
+def get_workspaces():
+    return db['workspaces'].find({})
+
+
 class DatabaseWrapper:
 
     def __init__(self, team_id):
@@ -63,10 +67,11 @@ class DatabaseWrapper:
                                                        {'$set': {"ended": True, "end_ts": time.time()}})
 
     def save_oauth(self, token):
-        db[self.team_id + 'auth'].insert_one({'token': token})
+        db['workspaces'].find_one_and_update({"team_id": self.team_id},
+                                             {"channel": "null", "token": token}, upsert=True)
 
     def get_oauth(self):
-        return db[self.team_id + 'auth'].find_one()["token"]
+        return db['workspaces'].find_one({"team_id": self.team_id})["token"]
 
     def get_top_users(self, time_range):
         aggregation = [
@@ -193,13 +198,13 @@ class DatabaseWrapper:
                 return self.season["start_ts"]
 
         if time_range == "week":
-            """Calculates the epoch time of last Sunday@6:00 GMT-5:00"""
+            """Calculates the epoch time of last Sunday@7:00 GMT-4:00"""
             gmtime = time.gmtime()
             wday = gmtime.tm_wday
             seconds = gmtime.tm_sec
             minutes = gmtime.tm_min + gmtime.tm_hour*60
-            if wday == 6 and minutes >= 1410:
-                return time.time() - (minutes-1410)*60 - seconds
+            if wday == 6 and minutes >= 1380:
+                return time.time() - (minutes-1380)*60 - seconds
             else:
-                return time.time() - (wday + 1)*86400 - (minutes-1410)*60 - seconds
+                return time.time() - (wday + 1)*86400 - (minutes-1380)*60 - seconds
 

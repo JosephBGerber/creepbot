@@ -3,7 +3,6 @@ from snapshot.database import DatabaseWrapper
 from snapshot.command import *
 from flask import abort, Flask, request, jsonify
 from os import environ
-import pprint
 
 
 app = Flask(__name__)
@@ -14,7 +13,7 @@ def auth():
     code = request.args.get("code")
     oauth = get_oauth(code)
     team_id = oauth["team_id"]
-    db = DatabaseWrapper(team_id, False)
+    db = DatabaseWrapper(team_id)
     token = oauth['bot']['bot_access_token']
     db.save_oauth(token)
 
