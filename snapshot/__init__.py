@@ -64,7 +64,7 @@ def statistics():
     arguments = request.form.get('text', "").split(' ')
 
     user_result = _users.search(arguments[0])
-    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week"] and not user_result:
+    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week", "gm_set_channel"] and not user_result:
         return fail_command()
 
     if len(arguments) > 1 and arguments[1] in ["week", "season", "all-time"]:
