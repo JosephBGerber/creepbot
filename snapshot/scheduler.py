@@ -17,6 +17,6 @@ def gm_week():
 
 def setup_jobs():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(gm_week, "cron", day_of_week="6", hour="23", minute="0")
+
     scheduler.start()
 
