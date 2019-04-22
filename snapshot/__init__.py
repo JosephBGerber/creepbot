@@ -1,6 +1,7 @@
 from snapshot.slack import get_oauth, _users
 from snapshot.database import DatabaseWrapper
 from snapshot.command import *
+from snapshot.scheduler import gm_week
 from flask import abort, Flask, request, jsonify
 from os import environ
 
@@ -18,6 +19,12 @@ def auth():
     db.save_oauth(token)
 
     return "Snapshot has been installed"
+
+
+@app.route('/week', methods=['GET'])
+def week():
+    gm_week()
+    return "I ran it!"
 
 
 @app.route('/', methods=['POST'])
