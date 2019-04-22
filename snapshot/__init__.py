@@ -1,9 +1,9 @@
 from snapshot.slack import get_oauth, _users
 from snapshot.database import DatabaseWrapper
 from snapshot.command import *
+from snapshot.scheduler import gm_week
 from flask import abort, Flask, request, jsonify
 from os import environ
-import pprint
 
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ def auth():
     code = request.args.get("code")
     oauth = get_oauth(code)
     team_id = oauth["team_id"]
-    db = DatabaseWrapper(team_id, False)
+    db = DatabaseWrapper(team_id)
     token = oauth['bot']['bot_access_token']
     db.save_oauth(token)
 
@@ -33,7 +33,7 @@ def main():
     team_id = json["team_id"]
     db = DatabaseWrapper(team_id)
 
-    if "files" in json["event"] and json["event"]["type"] == "message" and json["event"]["channel"] in environ["CHANNEL_LIST"].split():
+    if "files" in json["event"] and json["event"]["type"] == "message" and db.correct_channel(json["event"]["channel"]):
         db.create_shot(json["event"])
         return ''
 
@@ -65,7 +65,7 @@ def statistics():
     arguments = request.form.get('text', "").split(' ')
 
     user_result = _users.search(arguments[0])
-    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week"] and not user_result:
+    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week", "gm_set_channel"] and not user_result:
         return fail_command()
 
     if len(arguments) > 1 and arguments[1] in ["week", "season", "all-time"]:
@@ -91,6 +91,10 @@ def statistics():
     if user_result:
         wins, points = db.get_user_stats("season", user_result[2])
         return user_command(db.season, user_result[2], wins, points)
+
+    if arguments[0] == "gm_set_channel":
+        db.set_channel(request.form.get("channel_id"))
+        return jsonify(response_type='ephemeral', text="Snapshot channel set")
 
     if arguments[0] == "gm_start":
         if request.form.get("user_id") not in gm_list:

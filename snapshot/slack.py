@@ -2,6 +2,7 @@ from re import compile
 from os import environ
 from requests import get, post
 import time
+import pprint
 
 _users = compile(r"(<@)([\w]+)([>|])")
 
@@ -20,6 +21,16 @@ def get_week(season):
         return int((time.time()-season["start_ts"])//604800)
     else:
         return -1
+
+
+def post_message(text, channel, oauth):
+    response = post('https://slack.com/api/chat.postMessage', {
+        'token': oauth,
+        'channel': channel,
+        'text': text
+    })
+
+    pprint.pprint(response)
 
 
 def get_oauth(code):
