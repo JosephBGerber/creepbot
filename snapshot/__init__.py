@@ -21,12 +21,6 @@ def auth():
     return "Snapshot has been installed"
 
 
-@app.route('/week', methods=['GET'])
-def week():
-    gm_week()
-    return "I ran it!"
-
-
 @app.route('/', methods=['POST'])
 def main():
     json = request.json

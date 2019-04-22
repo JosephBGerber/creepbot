@@ -7,7 +7,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 def init_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=gm_week, trigger="cron", week="*", day_of_week="6", hour="23", minute="0")
-    scheduler.add_job(func=gm_week, trigger="cron", hour="*/2")
     scheduler.start()
 
 
