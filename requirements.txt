@@ -1,6 +1,5 @@
 flask
 apscheduler
-flask_apscheduler
 gunicorn
 pymongo
 requests
