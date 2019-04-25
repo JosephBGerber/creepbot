@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from bson import Decimal128
-from snapshot.slack import list_users, react, get_week
+from snapshot.slack import list_users, react, get_week, permalink
 from os import environ
 import time
 
@@ -105,6 +105,22 @@ class DatabaseWrapper:
         ]
 
         return list(db[self.team_id + 'shots'].aggregate(aggregation))
+
+    def get_best_shots(self, time_range, user=None):
+        aggregation = []
+        if user:
+            aggregation += [{'$match': {'user': user}}]
+
+        aggregation += [
+            {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
+            {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
+            {'$sort': {'plus': -1}},
+            {'$limit': 5}
+        ]
+
+        shots = list(db[self.team_id + 'shots'].aggregate(aggregation))
+
+        return map(permalink, shots, self.get_oauth())
 
     def get_season_wins(self, user=None):
         aggregation = [

@@ -43,6 +43,16 @@ def worst_command(time_range, top_targets):
     return jsonify(response_type='ephemeral', text=text)
 
 
+def shots_command(time_range, shots):
+    text = f"Best shots of {time_range}:\n"
+
+    for index, shot in enumerate(shots, 1):
+        text += f'{index}. f{shot[0]} - {shot[1]}\n'
+
+    return jsonify(response_type='ephemeral', text=text)
+
+
+
 def wins_command(season, season_wins):
     if not season:
         text = "There is no current season."
