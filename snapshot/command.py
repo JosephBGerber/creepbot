@@ -28,8 +28,8 @@ def fail_command():
 
 def best_command(time_range, top_users):
     text = f"Users with the most likes of {time_range}:\n"
-    for index, reactions in enumerate(top_users, 1):
-        text += f'{index}. {join_ids(reactions["ids"])} - {reactions["_id"]}\n'
+    for index, user in enumerate(top_users, 1):
+        text += f'{index}. {join_ids(user["_id"])} - {user["count"]}\n'
 
     return jsonify(response_type='ephemeral', text=text)
 
@@ -49,8 +49,8 @@ def wins_command(season, season_wins):
         return jsonify(response_type='ephemeral', text=text)
     else:
         text = "Users with the most wins of this season:\n"
-        for index, reactions in enumerate(season_wins, 1):
-            text += f'{index}. {join_ids(reactions["users"])} - {reactions["_id"]}\n'
+        for index, user in enumerate(season_wins, 1):
+            text += f'{index}. {join_ids(user["_id"])} - {user["wins"]}\n'
 
         return jsonify(response_type='ephemeral', text=text)
 

@@ -79,17 +79,20 @@ class DatabaseWrapper:
     def get_oauth(self):
         return db['workspaces'].find_one({"team_id": self.team_id})["oauth"]
 
-    def get_top_users(self, time_range):
-        aggregation = [
+    def get_top_users(self, time_range, user=None):
+        aggregation = []
+        if user:
+            aggregation += [{'$match': {'user': user}}]
+
+        aggregation += [
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$group': {'_id': '$user', 'count': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$count', 'ids': {'$push': '$_id'}}},
-            {'$sort': {'_id': -1}},
+            {'$sort': {'count': -1}},
             {'$limit': 5}
         ]
 
-        return db[self.team_id + 'shots'].aggregate(aggregation)
+        return list(db[self.team_id + 'shots'].aggregate(aggregation))
 
     def get_top_targets(self, time_range):
         aggregation = [
@@ -104,7 +107,7 @@ class DatabaseWrapper:
 
         return db[self.team_id + 'shots'].aggregate(aggregation)
 
-    def get_season_wins(self):
+    def get_season_wins(self, user=None):
         aggregation = [
             {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
             {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
@@ -112,86 +115,64 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
             {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'users': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
-            {'$group': {'_id': '$wins', 'users': {'$push': '$_id'}}},
-            {'$sort': {'_id': -1}},
-            {'$limit': 5}
+            {'$project': {'_id': '$_id',
+                          'user': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$group': {'_id': '$user', 'wins': {'$sum': 1}}},
+            {'$sort': {'wins': -1}},
         ]
 
-        return db[self.team_id + 'shots'].aggregate(aggregation)
+        if user:
+            aggregation += [{'$match': {'_id': user}}]
 
-    def get_user_stats(self, time_range, user):
+        aggregation += [{'$limit': 5}]
+
+        return list(db[self.team_id + 'shots'].aggregate(aggregation))
+
+    def get_last_weeks_winner(self):
         aggregation = [
-            {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
-            {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
+            {'$match': {'$expr': {'$gt': ['$week', -1]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
             {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'users': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
-            {'$match': {'_id': user}}
-        ]
+            {'$project': {'_id': '$_id',
+                          'user': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
+            {'$sort': {'_id': -1}}]
 
-        try:
-            wins = db[self.team_id + 'shots'].aggregate(aggregation).next().get('wins')
-        except StopIteration:
-            wins = 0
+        wins = list(db[self.team_id + 'shots'].aggregate(aggregation))
 
-        aggregation = [
-            {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range(time_range)]}}},
-            {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$match': {'$expr': {'$gte': ['$plus', 1]}}},
-            {'$group': {'_id': '$user', 'count': {'$sum': '$plus'}}},
-            {'$match': {'_id': user}}
-        ]
+        if len(wins):
+            winner = wins[0]
+        else:
+            winner = "Nobody"
 
-        try:
-            points = db[self.team_id + 'shots'].aggregate(aggregation).next().get('count')
-        except StopIteration:
+        return winner
+
+    def get_user_stats(self, time_range, user):
+        points = self.get_top_users(time_range, user)
+
+        if len(points) == 1:
+            points = points[0]['count']
+        else:
             points = 0
+
+        wins = self.get_season_wins(user)
+
+        if len(wins) == 1:
+            wins = wins[0]['wins']
+        else:
+            wins = 0
 
         return wins, points
 
     def get_season_champion(self):
-        aggregation = [
-            {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
-            {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("season")]}}},
-            {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$match': {'$expr': {'$gt': ['$week', -1]}}},
-            {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'users': {'$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
-            {'$sort': {'wins': -1}},
-            {'$limit': 1}]
+        wins = self.get_season_wins()
 
-        try:
-            champ = db[self.team_id + 'shots'].aggregate(aggregation).next().get("_id")
-        except StopIteration:
-            champ = "Nobody"
+        if len(wins) > 0:
+            champion = wins[0]['_id']
+        else:
+            champion = "Nobody"
 
-        return champ
-
-    def get_last_weeks_winner(self):
-        aggregation = [
-            {'$match': {'$expr': {'$lt': ['$ts', self.get_time_range("week")]}}},
-            {'$match': {'$expr': {'$gt': ['$ts', self.get_time_range("week") - 604800]}}},
-            {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
-            {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
-            {'$group': {'_id': '$_id.week', 'users': {'$push': '$_id.user'}, 'sums': {'$push': '$sum'}}},
-            {'$project': {'_id': '$_id', 'users': {
-                '$arrayElemAt': ['$users', {'$indexOfArray': ['$sums', {'$max': '$sums'}]}]}}},
-            {'$group': {'_id': '$users', 'wins': {'$sum': 1}}},
-            {'$sort': {'wins': -1}},
-            {'$limit': 1}]
-
-        try:
-            champ = db[self.team_id + 'shots'].aggregate(aggregation).next().get("_id")
-        except StopIteration:
-            champ = "Nobody"
-
-        return champ
+        return champion
 
     def get_time_range(self, time_range):
         if time_range == "all-time":
@@ -213,4 +194,3 @@ class DatabaseWrapper:
                 return time.time() - (minutes-1380)*60 - seconds
             else:
                 return time.time() - (wday + 1)*86400 - (minutes-1380)*60 - seconds
-

@@ -23,14 +23,31 @@ def get_week(season):
         return -1
 
 
-def post_message(text, channel, oauth):
+def react(channel, timestamp, token, reaction):
+    post('https://slack.com/api/reactions.add', {
+        'channel': channel,
+        'name': reaction,
+        'timestamp': timestamp,
+        'token': token
+    })
+
+
+def post_message(text, channel, token):
     response = post('https://slack.com/api/chat.postMessage', {
-        'token': oauth,
+        'token': token,
         'channel': channel,
         'text': text
     })
 
     pprint.pprint(response)
+
+
+def permalink(ts, channel, token):
+    return get('https://slack.com/api/chat.getPermalink', {
+        'token': token,
+        'channel': channel,
+        'message_ts': ts
+    })
 
 
 def get_oauth(code):
@@ -41,10 +58,4 @@ def get_oauth(code):
     }).json()
 
 
-def react(channel, timestamp, token, reaction):
-    post('https://slack.com/api/reactions.add', {
-        'channel': channel,
-        'name': reaction,
-        'timestamp': timestamp,
-        'token': token
-    })
+
