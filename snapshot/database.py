@@ -100,12 +100,11 @@ class DatabaseWrapper:
             {'$match': {'$expr': {'$lte': ['$trash', 10]}}},
             {'$unwind': '$targets'},
             {'$group': {'_id': '$targets', 'count': {'$sum': 1}}},
-            {'$group': {'_id': '$count', 'ids': {'$push': '$_id'}}},
-            {'$sort': {'_id': -1}},
+            {'$sort': {'count': -1}},
             {'$limit': 5}
         ]
 
-        return db[self.team_id + 'shots'].aggregate(aggregation)
+        return list(db[self.team_id + 'shots'].aggregate(aggregation))
 
     def get_season_wins(self, user=None):
         aggregation = [
