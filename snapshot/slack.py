@@ -43,12 +43,14 @@ def post_message(text, channel, token):
 
 
 def permalink(shot, token):
-    return (get('https://slack.com/api/chat.getPermalink', {
+    response = get('https://slack.com/api/chat.getPermalink', {
         'token': token,
         'channel': shot['channel'],
-        'message_ts': shot['ts']
-    }).json()[u'permalink'],
-            shot['plus'])
+        'message_ts': shot['ts']}).json()
+
+    pprint.pprint(response)
+
+    return response['permalink'], shot['plus']
 
 
 def get_oauth(code):
