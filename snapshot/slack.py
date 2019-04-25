@@ -47,7 +47,7 @@ def permalink(shot, token):
         'token': token,
         'channel': shot['channel'],
         'message_ts': shot['ts']
-    }),
+    }).json()['permalink'],
             shot['plus'])
 
 
