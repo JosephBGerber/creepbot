@@ -120,7 +120,7 @@ class DatabaseWrapper:
 
         shots = list(db[self.team_id + 'shots'].aggregate(aggregation))
 
-        return map(permalink, shots, self.get_oauth())
+        return [(permalink(shot, self.get_oauth()), shot['plus']) for shot in shots]
 
     def get_season_wins(self, user=None):
         aggregation = [

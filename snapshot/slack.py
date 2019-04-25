@@ -50,7 +50,7 @@ def permalink(shot, token):
 
     pprint.pprint(response)
 
-    return response['permalink'], shot['plus']
+    return response['permalink']
 
 
 def get_oauth(code):
