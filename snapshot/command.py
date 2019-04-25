@@ -52,7 +52,6 @@ def shots_command(time_range, shots):
     return jsonify(response_type='ephemeral', text=text)
 
 
-
 def wins_command(season, season_wins):
     if not season:
         text = "There is no current season."
