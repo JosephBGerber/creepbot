@@ -187,7 +187,7 @@ class DatabaseWrapper:
             {'$limit': 1}]
 
         try:
-            champ = db[self.team_id + 'shots'].aggregate(aggregation).next().get("_id")[‘user’]
+            champ = db[self.team_id + 'shots'].aggregate(aggregation).next().get("_id")
         except StopIteration:
             champ = "Nobody"
 
