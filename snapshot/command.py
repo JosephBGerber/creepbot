@@ -28,8 +28,8 @@ def fail_command():
 
 def best_command(time_range, top_users):
     text = f"Users with the most likes of {time_range}:\n"
-    for index, reactions in enumerate(top_users, 1):
-        text += f'{index}. {join_ids(reactions["ids"])} - {reactions["_id"]}\n'
+    for index, user in enumerate(top_users, 1):
+        text += f'{index}. <@{user["_id"]}> - {user["count"]}\n'
 
     return jsonify(response_type='ephemeral', text=text)
 
@@ -38,7 +38,16 @@ def worst_command(time_range, top_targets):
     text = f"Most targeted users of {time_range}:\n"
 
     for index, reactions in enumerate(top_targets, 1):
-        text += f'{index}. {join_ids(reactions["ids"])} - {reactions["_id"]}\n'
+        text += f'{index}. <@{reactions["_id"]}> - {reactions["count"]}\n'
+
+    return jsonify(response_type='ephemeral', text=text)
+
+
+def shots_command(time_range, shots):
+    text = f"Best shots of {time_range}:\n"
+
+    for index, shot in enumerate(shots, 1):
+        text += f'{index}. {shot[0]} - {shot[1]}\n'
 
     return jsonify(response_type='ephemeral', text=text)
 
@@ -49,8 +58,8 @@ def wins_command(season, season_wins):
         return jsonify(response_type='ephemeral', text=text)
     else:
         text = "Users with the most wins of this season:\n"
-        for index, reactions in enumerate(season_wins, 1):
-            text += f'{index}. {join_ids(reactions["users"])} - {reactions["_id"]}\n'
+        for index, user in enumerate(season_wins, 1):
+            text += f'{index}. <@{user["_id"]}> - {user["wins"]}\n'
 
         return jsonify(response_type='ephemeral', text=text)
 
@@ -84,7 +93,6 @@ def gm_start_season_command(name):
 def gm_end_season_command(champion):
 
     text = f"Congratulations <@{champion}> you’re the snapshot champion.\n\n" + \
-           "Go find Joseph Gerber to receive your paper crown!\n\n" + \
            "That’s all for this semester so there will be no more wins until next season, " + \
            "but your all-time score is still being updated so keep posting those shots!"
 

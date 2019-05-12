@@ -65,7 +65,7 @@ def statistics():
     arguments = request.form.get('text', "").split(' ')
 
     user_result = _users.search(arguments[0])
-    if arguments[0] not in ["help", "best", "worst", "wins", "gm_end", "gm_start", "gm_week", "gm_set_channel"] and not user_result:
+    if arguments[0] not in ["help", "best", "worst", "shots", "wins", "gm_end", "gm_start", "gm_week", "gm_set_channel"] and not user_result:
         return fail_command()
 
     if len(arguments) > 1 and arguments[1] in ["week", "season", "all-time"]:
@@ -83,6 +83,10 @@ def statistics():
     if arguments[0] == "worst":
         top_targets = db.get_top_targets(time_range)
         return worst_command(time_range, top_targets)
+
+    if arguments[0] == "shots":
+        top_shots = db.get_best_shots(time_range)
+        return shots_command(time_range, top_shots)
 
     if arguments[0] == "wins":
         season_wins = db.get_season_wins()
