@@ -47,7 +47,7 @@ def shots_command(time_range, shots):
     text = f"Best shots of {time_range}:\n"
 
     for index, shot in enumerate(shots, 1):
-        text += f'{index}. f{shot[0]} - {shot[1]}\n'
+        text += f'{index}. {shot[0]} - {shot[1]}\n'
 
     return jsonify(response_type='ephemeral', text=text)
 
@@ -93,7 +93,6 @@ def gm_start_season_command(name):
 def gm_end_season_command(champion):
 
     text = f"Congratulations <@{champion}> you’re the snapshot champion.\n\n" + \
-           "Go find Joseph Gerber to receive your paper crown!\n\n" + \
            "That’s all for this semester so there will be no more wins until next season, " + \
            "but your all-time score is still being updated so keep posting those shots!"
 

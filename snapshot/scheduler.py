@@ -8,7 +8,8 @@ def gm_week():
         print("Running gm_week for " + workspace["team_id"])
         db = DatabaseWrapper(workspace["team_id"])
 
-        champion = db.get_last_weeks_winner()
-        text = f"Congratulations to <@{champion}> for getting the most points this week!"
+        if db.season:
+            champion = db.get_last_weeks_winner()
+            text = f"Congratulations to <@{champion}> for getting the most points this week!"
 
-        post_message(text, workspace["channel"], workspace["oauth"])
+            post_message(text, workspace["channel"], workspace["oauth"])
