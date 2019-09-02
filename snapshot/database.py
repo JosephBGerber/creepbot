@@ -145,7 +145,7 @@ class DatabaseWrapper:
 
     def get_last_weeks_winner(self):
         aggregation = [
-            {'$match': {'$expr': {'$eq': ['$season', season['name']}}},
+            {'$match': {'$expr': {'$eq': ['$season', season['name']]}}},
             {'$match': {'$expr': {'$gt': ['$week', -1]}}},
             {'$match': {'$expr': {'$lt': ['$trash', 10]}}},
             {'$group': {'_id': {'user': '$user', 'week': '$week'}, 'sum': {'$sum': '$plus'}}},
