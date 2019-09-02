@@ -156,7 +156,7 @@ class DatabaseWrapper:
         wins = list(db[self.team_id + 'shots'].aggregate(aggregation))
 
         if len(wins):
-            winner = wins[0]
+            winner = wins[0]['user']
         else:
             winner = "Nobody"
 
