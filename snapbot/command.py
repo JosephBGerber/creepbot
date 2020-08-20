@@ -16,14 +16,14 @@ def help_command():
            f"its points are lost.\n\n" + \
            f"At the end of the week the user with the most points gets a win!\n\n" + \
            f"Get the most wins by the end of the semester to become the season champion!!\n\n" + \
-           f"Try using /creepbot to get statistics about the game."
+           f"Try using /snapbot to get statistics about the game."
 
     return jsonify(response_type='ephemeral', text=text)
 
 
 def fail_command():
     return jsonify(response_type='ephemeral',
-                   text='Usage: `/creepbot` `best|worst|wins|@user` [week|season|all-time]')
+                   text='Usage: `/snapbot` `best|worst|wins|@user` [week|season|all-time]')
 
 
 def best_command(time_range, top_users):
@@ -85,7 +85,7 @@ def gm_start_season_command(name):
                f" all its points are ignored.\n\n" + \
                f"At the end of the week the users with the most points gets a win!\n\n" + \
                f"Get the most wins by the end of the semester to become the season champion!!\n\n" + \
-               f"Try using /creepbot to get statistics about the game."
+               f"Try using /snapbot to get statistics about the game."
 
         return jsonify(response_type='in_channel', text=text)
 

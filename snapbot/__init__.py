@@ -4,6 +4,7 @@ from snapbot.command import *
 from snapbot.scheduler import gm_week
 from flask import abort, Flask, request, jsonify
 from os import environ
+from json import dumps
 
 
 app = Flask(__name__)
@@ -18,7 +19,7 @@ def auth():
     token = oauth['bot']['bot_access_token']
     db.save_oauth(token)
 
-    return "Snapshot has been installed"
+    return "Snapbot has been installed"
 
 
 @app.route('/', methods=['POST'])
@@ -29,6 +30,8 @@ def main():
 
     if json['type'] == 'url_verification':
         return json['challenge']
+
+    print(dumps(json))
 
     team_id = json["team_id"]
     db = DatabaseWrapper(team_id)
