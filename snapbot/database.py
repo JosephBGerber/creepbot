@@ -5,7 +5,7 @@ from os import environ
 import time
 
 
-db = MongoClient(environ["MONGODB_URI"])['snapbot']
+db = MongoClient(environ["MONGODB_URI"])['creepbot']
 
 
 def get_workspaces():
