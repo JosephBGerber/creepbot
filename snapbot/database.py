@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from bson import Decimal128
-from snapshot.slack import list_users, react, get_week, permalink
+from snapbot.slack import list_users, react, get_week, permalink
 from os import environ
 import time
 

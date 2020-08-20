@@ -1,5 +1,5 @@
-from snapshot import app as application
-from snapshot.scheduler import gm_week
+from snapbot import app as application
+from snapbot.scheduler import gm_week
 from apscheduler.schedulers.background import BackgroundScheduler
 
 

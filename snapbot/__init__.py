@@ -1,7 +1,7 @@
-from snapshot.slack import get_oauth, _users
-from snapshot.database import DatabaseWrapper
-from snapshot.command import *
-from snapshot.scheduler import gm_week
+from snapbot.slack import get_oauth, _users
+from snapbot.database import DatabaseWrapper
+from snapbot.command import *
+from snapbot.scheduler import gm_week
 from flask import abort, Flask, request, jsonify
 from os import environ
 

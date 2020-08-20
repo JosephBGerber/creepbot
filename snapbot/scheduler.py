@@ -1,5 +1,5 @@
-from snapshot.database import DatabaseWrapper, get_workspaces
-from snapshot.slack import post_message
+from snapbot.database import DatabaseWrapper, get_workspaces
+from snapbot.slack import post_message
 
 
 def gm_week():
