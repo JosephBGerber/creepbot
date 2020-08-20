@@ -4,7 +4,7 @@ from snapbot.command import *
 from snapbot.scheduler import gm_week
 from flask import abort, Flask, request, jsonify
 from os import environ
-from json import dumps
+import pprint
 
 
 app = Flask(__name__)
@@ -25,13 +25,12 @@ def auth():
 @app.route('/', methods=['POST'])
 def main():
     json = request.json
+    pprint.pprint(json)
     if request.json.get('token') != environ['SLACK_VERIFICATION_TOKEN']:
         abort(403)
 
     if json['type'] == 'url_verification':
         return json['challenge']
-
-    print(dumps(json))
 
     team_id = json["team_id"]
     db = DatabaseWrapper(team_id)
